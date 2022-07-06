@@ -75,5 +75,10 @@ export const reqDeleteSpu = (spuId) =>
         method: "post",
         data: skuinfo,
       });
+    //  列表数据接口/admin/product/findBySpuId/{spuId}
+    export const reqSkuList = (spuId) =>
+      request({
+        url: `/admin/product/findBySpuId/${spuId}`,
+      });
 
 

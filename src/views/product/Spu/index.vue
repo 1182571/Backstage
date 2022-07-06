@@ -15,10 +15,10 @@
           <el-table-column prop="description" label="spu描述" align="center" />
           <el-table-column label="操作" align="center">
             <template slot-scope="{ row, $index }">
-              <hint-button type="success" icon="el-icon-plus" size="mini" title="添加sku" @click="addSku(row)"/>
+              <hint-button type="success" icon="el-icon-plus" size="mini" title="添加sku" @click="addSku(row)" />
               <!-- 修改的时候要把里面的内容给组件 row-->
               <hint-button type="warning" icon="el-icon-edit" size="mini" title="修改spusku" @click="UpdateSpu(row)" />
-              <hint-button type="info" icon="el-icon-info" size="mini" title="查看当前spu全部sku列表" />
+              <hint-button type="info" icon="el-icon-info" size="mini" title="查看当前spu全部sku列表" @click="handler(row)" />
               <el-popconfirm title="这是一段内容确定删除吗？" @onConfirm='deleteSpu(row)'>
                 <hint-button type="danger" icon="el-icon-delete" size="mini" title="删除spu" slot="reference" />
               </el-popconfirm>
@@ -34,6 +34,19 @@
       <SpuForm v-show="scene == 1" @changeScene="changeScene" ref="spu"></SpuForm>
       <SkuForm v-show="scene == 2" ref="sku" @changeScence="changeScences"></SkuForm>
     </el-card>
+    <el-dialog :title="spu.spuName + '的列表'" :visible.sync="dialogTableVisible" :before-close='close'>
+      <!-- table展示skuList列表 -->
+      <el-table :data='skuList' border style="width:100%" v-loading="loading">
+        <el-table-column prop='skuName' label='名称' width='width'></el-table-column>
+        <el-table-column prop='price' label='价格' width='width'></el-table-column>
+        <el-table-column prop='weight' label='重量' width='width'></el-table-column>
+        <el-table-column label='默认图片' width='width'>
+          <template slot-scope="{row,$index}">
+            <img :src="row.skuDefaultImg" style="width:100px;height:100px">
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -59,12 +72,16 @@ export default {
       total: 0,
       scene: 0,
       flag: true,
+      dialogTableVisible: false,
+      spu: {},
+      skuList: [],
+      loading: true
     };
   },
   methods: {
     //通知父组件修改场景
-    changeScences(scence){
-        this.scene = scence
+    changeScences(scence) {
+      this.scene = scence
     },
     handleSizeChange(limit) {
       this.limit = limit;
@@ -94,7 +111,7 @@ export default {
       const { page, limit, category3id } = this;
       const result = await this.$API.spu.reqSpuList(page, limit, category3id);
       this.records = result.data.records;
-      this.total =result.data.total
+      this.total = result.data.total
     },
     // 添加spu
     addSpu() {
@@ -130,16 +147,37 @@ export default {
         })
         //this.getPutList(this.page=1)
         //this.getPutList(this.records.length>1?this.page:this.page-1)
-        console.log(this.records.length>1?this.page:this.page-1);
+        console.log(this.records.length > 1 ? this.page : this.page - 1);
       }
     },
     //添加sku按钮
-    addSku(row){
-        //console.log(row);
-        this.scene = 2
-        this.$refs.sku.getData(this.category1id,this.category2id,row)
+    addSku(row) {
+      //console.log(row);
+      this.scene = 2
+      this.$refs.sku.getData(this.category1id, this.category2id, row)
+    },
+    //  查看sku按钮
+    async handler(spu) {
+      this.dialogTableVisible = true
+      this.spu = spu
+      //获取sku列表数据展示
+      let result = await this.$API.spu.reqSkuList(spu.id)
+      console.log(result);
+      // 存储skuList数据
+      if (result.code == 200) {
+        this.skuList = result.data
+      }
+      this.loading = false
+    },
+    //点击x的时候  解决了第二次没有加载效果  解决了数据回显
+    close(done){
+        this.loading = true
+        this.skuList = []
+        //放行
+        done();
     }
   },
+
 };
 </script>
 
